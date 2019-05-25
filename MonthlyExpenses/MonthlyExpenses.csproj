@@ -11,7 +11,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Controllers\" />
+    <ProjectReference Include="..\MonthlyExpenses.Api\MonthlyExpenses.Api.csproj" />
   </ItemGroup>
 
 </Project>
