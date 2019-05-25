@@ -1,0 +1,5 @@
+{
+  "ConnectionStrings": {
+    "ExpenseDb": "Data Source=mothership\\sqlexpress;Initial Catalog=Expenses;User Id=demo; Password=demo123;Integrated Security=True;"
+  }
+}
