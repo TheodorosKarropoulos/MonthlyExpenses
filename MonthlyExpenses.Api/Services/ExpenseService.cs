@@ -1,4 +1,6 @@
-﻿using MonthlyExpenses.Api.Model;
+﻿using AutoMapper;
+using MonthlyExpenses.Api.Dto;
+using MonthlyExpenses.Api.Model;
 using MonthlyExpenses.Api.Repository;
 using System;
 using System.Collections.Generic;
@@ -10,20 +12,20 @@ namespace MonthlyExpenses.Api.Service
     public class ExpenseService : IExpenseService
     {
         private readonly ExpensesRepository repository;
+        private readonly IMapper mapper;
 
-        public ExpenseService(ExpensesRepository repository)
+        public ExpenseService(ExpensesRepository repository,
+            IMapper mapper)
         {
             this.repository = repository
                 ?? throw new ArgumentNullException(nameof(repository));
+            this.mapper = mapper 
+                ?? throw new ArgumentNullException(nameof(mapper));
         }
 
         public async Task CreateCategoryAsync(Dto.Category request)
         {
-            var category = new Database.Category
-            {
-                Name = request.Name
-            };
-
+            var category = mapper.Map<Database.Category>(request);
             try
             {
                 await repository.CreateAsync(category);
@@ -46,7 +48,7 @@ namespace MonthlyExpenses.Api.Service
             {
                 Amount = request.Amount,
                 Month = request.Month,
-                Status = (byte)request.Status,
+                Status = request.Status,
                 Year = year,
                 CategoryId = request.CategoryId
             };
@@ -62,15 +64,12 @@ namespace MonthlyExpenses.Api.Service
             }
         }
 
-        public async Task<List<Category>> GetCategoriesAsync()
+        public async Task<List<Dto.Category>> GetCategoriesAsync()
         {
             try
             {
                 var results = await repository.GetCategoriesAsync();
-                return results.Select(x => new Category
-                {
-                    Name = x.Name
-                }).ToList();
+                return mapper.Map<List<Dto.Category>>(results);
             }
             catch (Exception e)
             {
@@ -78,29 +77,34 @@ namespace MonthlyExpenses.Api.Service
             }
         }
 
-        public async Task<List<Model.Expense>> GetExpensesAsync()
+        public async Task<List<Dto.Expense>> GetExpensesAsync()
         {
             try
             {
                 var expenses = new List<Model.Expense>();
                 var results = await repository.GetExpensesAsync();
-                foreach (var result in results)
-                {
-                    var expense = new Model.Expense
-                    {
-                        Amount = result.Amount,
-                        Month = result.Month,
-                        Status = (Constants.ExpenseStatus)result.Status,
-                        Year = result.Year
-                    };
-                    expense.Category = await repository.GetCategoryByIdAsync(result.CategoryId);
-                    expenses.Add(expense);
-                }
-                return expenses;
+                return mapper.Map<List<Dto.Expense>>(results);
             }
             catch (Exception e)
             {
                 throw e;
+            }
+        }
+
+        public async Task PartialUpdateCategoryAsync(int id, Dto.Category category)
+        {
+            var result = await repository.GetCategoryByIdAsync(id);
+            if (result != null)
+            {
+                await repository.UpdateAsync(result);
+                try
+                {
+                    await repository.CommitAsync();
+                }
+                catch
+                {
+                    throw;
+                }
             }
         }
     }

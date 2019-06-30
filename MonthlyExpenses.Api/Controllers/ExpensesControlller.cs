@@ -3,14 +3,13 @@ using MonthlyExpenses.Api.Service;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace MonthlyExpenses.Api.Controllers
 {
     [Route("api")]
     [ApiController]
-    public class ExpensesControlller : ControllerBase
+    public partial class ExpensesControlller : ControllerBase
     {
         private readonly IExpenseService service;
 
@@ -25,17 +24,7 @@ namespace MonthlyExpenses.Api.Controllers
         {
             try
             {
-                var result = await service.GetExpensesAsync();
-                var expenses = result.Select(x => new Dto.Expense
-                {
-                    Amount = x.Amount,
-                    CategoryId = x.Category.Id,
-                    Month = x.Month,
-                    Status = x.Status,
-                    Year = x.Year.ToString()
-                });
-
-                return expenses.ToList();
+                return await service.GetExpensesAsync();
             }
             catch (Exception e)
             {
@@ -58,37 +47,5 @@ namespace MonthlyExpenses.Api.Controllers
             }
         }
 
-        [HttpPost]
-        [Route("categories")]
-        public async Task<ActionResult<int>> PostAsync([FromBody] Dto.Category request)
-        {
-            try
-            {
-                await service.CreateCategoryAsync(request);
-                return Ok();
-            }
-            catch (Exception e)
-            {
-                return BadRequest(e.Message);
-            }
-        }
-
-        [HttpGet]
-        [Route("categories")]
-        public async Task<ActionResult<List<Dto.Category>>> GetCategoriesAsync()
-        {
-            try
-            {
-                var result = await service.GetCategoriesAsync();
-                return result.Select(x => new Dto.Category
-                {
-                    Name = x.Name
-                }).ToList();
-            }
-            catch (Exception e)
-            {
-                return BadRequest(e.Message);
-            }
-        }
     }
 }

@@ -10,7 +10,7 @@ namespace MonthlyExpenses.Api.Database
         public string Month { get; set; }
         public int Year { get; set; }
         public decimal Amount { get; set; }
-        public byte Status { get; set; }
+        public Constants.ExpenseStatus Status { get; set; }
         public int CategoryId { get; set; }
     }
 }

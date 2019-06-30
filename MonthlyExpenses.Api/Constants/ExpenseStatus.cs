@@ -1,6 +1,6 @@
 ﻿namespace MonthlyExpenses.Api.Constants
 {
-    public enum ExpenseStatus
+    public enum ExpenseStatus : byte
     {
         None = 0,
         UnPaid = 1,

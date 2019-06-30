@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Builder;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -26,13 +27,25 @@ namespace MonthlyExpenses.Api
         public void ConfigureServices(IServiceCollection services)
         {
             services
-                .AddTransient<IExpenseService, ExpenseService>();
-            services.AddScoped<Repository.ExpensesRepository>();
+                .AddTransient<IExpenseService, ExpenseService>()
+                .AddScoped<Repository.ExpensesRepository>()
+                ;
 
             services
                 .AddDbContext<ExpenseDbContext>(options =>
                        options
                        .UseSqlServer(Configuration.GetConnectionString("ExpenseDb")));
+
+            // mapper configuration
+            var config = new AutoMapper.MapperConfiguration(cfg =>
+            {
+                cfg.AllowNullCollections = true;
+                cfg.AddProfile(new CategoryMapProfile());
+                cfg.AddProfile(new ExpenseMapProfile());
+            });
+
+            IMapper mapper = config.CreateMapper();
+            services.AddSingleton(mapper);
 
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
         }

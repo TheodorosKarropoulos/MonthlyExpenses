@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 using MonthlyExpenses.Api.Database;
 using System;
 using System.Collections.Generic;
@@ -10,35 +11,54 @@ namespace MonthlyExpenses.Api.Repository
     public class ExpensesRepository
     {
         private readonly ExpenseDbContext context;
+        private readonly IMapper mapper;
 
-        public ExpensesRepository(ExpenseDbContext context)
+        public ExpensesRepository(ExpenseDbContext context,
+            IMapper mapper)
         {
             this.context = context
                 ?? throw new ArgumentNullException(nameof(context));
+            this.mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         }
 
-        public async Task<List<Database.Expense>> GetExpensesAsync()
+        public async Task<List<Model.Expense>> GetExpensesAsync()
         {
-            var expenses = context.Set<Database.Expense>();
+            var result = await context
+                .Set<Database.Expense>()
+                .ToListAsync();
 
-            if (!expenses.Any())
+            if (!result.Any())
             {
-                return new List<Expense>();
+                return new List<Model.Expense>();
             }
 
-            return await expenses.ToListAsync();
+            try
+            {
+                return mapper.Map<List<Database.Expense>, List<Model.Expense>>(result);
+            }
+            catch(Exception e)
+            {
+                throw new Exception(e.Message);
+            }
         }
 
-        public async Task<List<Database.Category>> GetCategoriesAsync()
+        public async Task<List<Model.Category>> GetCategoriesAsync()
         {
-            var result = context.Set<Database.Category>();
+            var result = await context.Set<Database.Category>()
+                .ToListAsync();
 
-            if(!result.Any())
+            if (!result.Any())
             {
-                return new List<Category>();
+                return new List<Model.Category>();
             }
 
-            return await result.ToListAsync();
+            try
+            {
+                return mapper.Map<List<Model.Category>>(result);
+            }catch(Exception e)
+            {
+                throw new Exception(e.Message);
+            }
         }
 
         public async Task<Model.Category> GetCategoryByIdAsync(int id)
@@ -46,16 +66,18 @@ namespace MonthlyExpenses.Api.Repository
             var result = await context.Set<Database.Category>()
                 .FindAsync(id);
 
-            return new Model.Category
-            {
-                Id = result.Id,
-                Name = result.Name
-            };
+            return mapper.Map<Model.Category>(result);
         }
 
         public async Task CreateAsync<T>(T entity) where T : class
         {
             await context.AddAsync(entity);
+        }
+
+        public async Task UpdateAsync<T>(T entity) where T : class
+        {
+            var existing = await context.Set<T>().FindAsync(entity);
+            mapper.Map(entity, existing);
         }
 
         public async Task CommitAsync()
@@ -64,9 +86,9 @@ namespace MonthlyExpenses.Api.Repository
             {
                 await context.SaveChangesAsync();
             }
-            catch(Exception e)
+            catch (Exception e)
             {
-                throw e;
+                throw new Exception(e.Message);
             }
         }
     }
